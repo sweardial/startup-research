@@ -45,3 +45,4 @@ Thumbs.db
 
 node_modules
 vector_analysis_results.json
+job_market_analyzer/output/

@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Upwork AI",
+  "version": "2.0",
+  "description": "Scrapes Upwork",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "downloads",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://*.upwork.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.upwork.com/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "action": {},
+  "commands": {
+    "toggle-scraping": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Toggle job scraping"
+    }
+  }
+}

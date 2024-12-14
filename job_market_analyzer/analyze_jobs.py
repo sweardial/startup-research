@@ -1,5 +1,6 @@
 import json
 import os
+import time
 import re
 import sys
 from collections import Counter, defaultdict
@@ -8,7 +9,6 @@ from typing import Dict, List, TypedDict
 import chromadb
 import dotenv
 import numpy as np
-import spacy
 from chromadb.utils import embedding_functions
 from openai import OpenAI
 from sklearn.cluster import KMeans
@@ -24,35 +24,9 @@ openai_ef = embedding_functions.OpenAIEmbeddingFunction(
     model_name="text-embedding-3-small"
 )
 
-# Load spaCy for better text analysis
-try:
-    nlp = spacy.load("en_core_web_sm")
-except:
-    os.system("python -m spacy download en_core_web_sm")
-    nlp = spacy.load("en_core_web_sm")
-
 class JobMetrics(TypedDict):
     industries: Counter
     use_cases: Counter
-
-TECHNOLOGY_PATTERNS = {
-    'ml_frameworks': [
-        'tensorflow', 'pytorch', 'keras', 'scikit-learn', 'hugging face', 'transformers',
-        'mxnet', 'caffe', 'theano', 'paddle', 'jax', 'fastai'
-    ],
-    'cloud_platforms': [
-        'aws', 'amazon web services', 'gcp', 'google cloud', 'azure', 'ibm cloud',
-        'alibaba cloud', 'oracle cloud', 'digitalocean'
-    ],
-    'databases': [
-        'postgresql', 'mysql', 'mongodb', 'redis', 'elasticsearch', 'cassandra',
-        'dynamodb', 'neo4j', 'firebase', 'supabase'
-    ],
-    'ai_tools': [
-        'openai', 'gpt-4', 'gpt-3', 'chatgpt', 'claude', 'anthropic', 'llama',
-        'stable diffusion', 'midjourney', 'dall-e', 'whisper', 'langchain'
-    ]
-}
 
 INDUSTRY_KEYWORDS = {
     'healthcare': ['healthcare', 'medical', 'hospital', 'clinical', 'health'],
@@ -229,12 +203,6 @@ def ensure_valid_json(response_text: str) -> Dict:
                     "required_technologies": [],
                     "competitive_advantage": "Unknown"
                 },
-                "implementation_approach": {
-                    "core_technologies": [],
-                    "key_features": [],
-                    "technical_requirements": [],
-                    "development_roadmap": []
-                },
                 "market_validation": {
                     "demand_signals": [],
                     "skill_requirements": [],
@@ -271,7 +239,6 @@ def analyze_cluster_with_metrics(jobs: List[str], total_jobs: int) -> Dict:
     
     metrics_summary["percentages"] = {
         "cluster_size": (len(jobs) / total_jobs) * 100 if total_jobs > 0 else 0,
-     
         "industry_share": {
             industry: (count / len(jobs)) * 100 if len(jobs) > 0 else 0
             for industry, count in metrics_summary["top_industries"].items()
@@ -307,9 +274,6 @@ Respond in JSON format:
         "target_market": "Specific industry/user segment based on the data",
         "competitive_advantage": "Specific advantage based on market gaps in the data"
     }},
-    "implementation_approach": {{
-        "development_roadmap": ["List specific development phases"]
-    }},
     "market_validation": {{
         "target_industries": ["List specific industries showing interest"]
     }}
@@ -325,9 +289,12 @@ Respond in JSON format:
             messages=initial_messages,
             temperature=0.2,
         )
+        
         # Log request/initial_prompt_response
         log_openai_interaction('openai_initial_analysis.log', initial_messages, initial_prompt_response.choices[0].message.content)        
         
+        
+        time.sleep(5)
         validation_prompt = f"""Review this initial analysis and validate it against the data:
 
 Initial Analysis:
@@ -354,6 +321,8 @@ IMPORTANT: Your response must be valid JSON."""
             messages=validation_messages,
             temperature=0.1,
         )
+        
+        time.sleep(5000)
         # Log request/validation_prompt_response
         log_openai_interaction('openai_validation.log', validation_messages, validation_prompt_response.choices[0].message.content)
 
